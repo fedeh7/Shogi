@@ -4,15 +4,16 @@ class Shogi():
         self.board = [] 
         self.set_board()
 
-        self.white_captures = [" PV", " RV"]
-        self.black_captures = [" PV", " RV", " PV"]
+        self.white_captures = []
+        self.black_captures = []
 
-        self.board_display = 0
         self.lifted_piece = 0
-        self.lifted_piece_coordinates = 0
+        self.lifted_piece_coordinates = ("", "")
         self.is_playing = True
         self.playerturn = "white"
-        self.error = "Error Message goes here"
+        self.error = ""
+
+        self.pruebita = [0, 0, 0, 0, 0]
 
     def board_print(self):
         screen = "\nCaptures-Black:\n "
@@ -36,13 +37,6 @@ class Shogi():
             screen += f"{self.white_captures[piece]} "
         return screen
 
-    def set_test_board(self):
-        self.board = []
-        for row in range(9):
-            self.board.append([])
-            for column in range(9):
-                self.board[row].append("   ")
-
     def set_board(self):
         self.board = []
         for row in range(9):
@@ -56,21 +50,16 @@ class Shogi():
         first_row_pieces = [Lance, Knight, SilverGeneral, GoldGeneral, King, GoldGeneral, SilverGeneral, Knight, Lance]
         for color in ["black", "white"]:
             for column in range(9):
-                self.board[row_pawn][column] = Pawn(color)
-                self.board[row_pawn][column].promote()
-                self.board[row_first][column] = first_row_pieces[column](color)
+                self.board[row_pawn][column] = Pawn(color, (row_pawn, column))
+                self.board[row_first][column] = first_row_pieces[column](color, (row_first, column))
             if color == "black":
-                self.board[row_second][1], self.board[row_second][7] = (Rook(color), Bishop(color))
+                self.board[row_second][1], self.board[row_second][7] = (Rook(color, (row_second, 1)), Bishop(color, (row_second, 7)))
             else:
-                self.board[row_second][1], self.board[row_second][7] = (Bishop(color), Rook(color))
+                self.board[row_second][1], self.board[row_second][7] = (Bishop(color, (row_second, 1)), Rook(color, (row_second, 7)))
             row_first, row_second, row_pawn = (8, 7, 6)
-        for row in range(9):
-            for column in range(9):
-                if self.board[row][column] != "   ":
-                    self.board[row][column].position = (row, column)
 
     def play_origin(self, row, column):
-        self.error = "Error Message goes here"
+        self.error = ""
         if self.validate_origin_coordinates_values(row, column):
             if self.validate_origin_coordinates_location(int(row), int(column)):
                 self.lift_piece_for_movement(int(row), int(column))
@@ -118,7 +107,6 @@ class Shogi():
             self.error = "You can't move that piece anywhere right now!"
             return False
         return True
-        
 
     def lift_piece_for_movement(self, row, column):
         if row == 9:
@@ -126,17 +114,17 @@ class Shogi():
         else:
             self.lifted_piece = self.board[row][column]
         self.lifted_piece_coordinates = (row, column)
-            #self.board[row][column] = "   "
 
     def play_destination(self, row, column):
-        self.error = "Error Message goes here"
+        self.error = ""
         if self.validate_destination_coordinates(row, column):
             self.move_piece(int(row), int(column))
             self.clean_lifted_piece_origin_location()
-            # self.next_turn()
+            if self.is_playing:
+                #self.next_turn()
+                pass
             return True
         return False
-
 
     def validate_destination_coordinates(self, row, column):
         try:
@@ -164,14 +152,16 @@ class Shogi():
 
     def move_piece(self, row, column):
         if self.board[row][column] != "   ":
+            self.board[row][column].promoted = False
+            self.board[row][column].captured = True
             if self.playerturn == "white":
                 self.board[row][column].color = "white"
-                self.board[row][column].promoted = False
                 self.white_captures.append(self.board[row][column])
-            if self.playerturn == "black":
+            elif self.playerturn == "black":
                 self.board[row][column].color = "black"
-                self.board[row][column].promoted = False
                 self.black_captures.append(self.board[row][column])
+            if self.board[row][column].__class__.__name__ == "King":
+                self.is_playing = False
         self.board[row][column] = self.lifted_piece
         self.board[row][column].update_position(row, column)
         self.lifted_piece = 0
@@ -194,12 +184,13 @@ class Shogi():
 ##########################################################################################
 
 class Piece():
-    def __init__(self, name, color):
+    def __init__(self, name, color, position):
         self.name = name
         self.color = color
-        self.position = ("", "")
+        self.position = position
         self.promoted = False
-        self.possible_moves = []
+        self.captured = False
+        self.set_for_promotion = False
 
     def __repr__(self):
         promoted = ""
@@ -211,6 +202,9 @@ class Piece():
             return promoted + self.name + "\u2227"
         elif self.color == "black":
             return promoted + self.name + "\u2228"
+        else:
+            # This is only for testing
+            return "-T*"
 
     def valid_moves(self, board):
         if self.promoted == False:
@@ -237,7 +231,7 @@ class Piece():
         elif self.color == "black":
             coordinates.append((self.position[0] + 1, self.position[1] - 1))
             coordinates.append((self.position[0] + 1, self.position[1] + 1))
-        return self.filter_moves(coordinates, board)
+        return sorted(self.filter_moves(coordinates, board))
 
     def filter_moves(self, coordinates, board):
         filtered_moves = []
@@ -253,28 +247,38 @@ class Piece():
 
     def promote(self):  # Cambiar self.promoted
         self.promoted = True
+        self.set_for_promotion = False
 
     def update_position(self, row, column):
         self.position = (row, column)
-        if self.color == "white" and self.position[0] < 3:
-            self.promote()
-        elif self.color == "black" and 5 < self.position[0] < 9:
-            self.promote()
+        if not self.captured:
+            if self.color == "white" and self.position[0] < 3 and not self.promoted:
+                self.set_for_promotion = True
+            elif self.color == "black" and 5 < self.position[0] < 9 and not self.promoted:
+                self.set_for_promotion = True
+        else:
+            self.captured = False
+            self.set_for_promotion = False
 
-    def valid_drops(self, board):
-        return self.valid_drop_locations(board)
+    #def valid_drops(self, board):
+    #    return self.valid_drop_locations(board)
 
-    def valid_drop_locations(self, board):  # Terminar de proliijar, falta que tenga en cuenta las reglas
-        valid_coordinates = []              # no se puede poner una ficha en un lugar q no se pueda mover
+    def valid_drops(self, board):  # Terminar de proliijar, falta que tenga en cuenta las reglas
+        empty_spaces = []                   # no se puede poner una ficha en un lugar q no se pueda mover
+        valid_locations = []
         for row in range(9):                # tener en cuenta para PEON LANCE y KNIGHT
             for col in range(9):            # PEON no puede jaquear
                 if board[row][col] == "   ":
-                    valid_coordinates.append((row, col))
-        return valid_coordinates
+                    empty_spaces.append((row, col))
+        for coords in empty_spaces:
+            self.position = coords
+            if len(self.movement_unpromoted(board)) > 0:
+                valid_locations.append(coords)
+        return valid_locations
     
 class Pawn(Piece):
-    def __init__(self, color):
-        super().__init__("P", color)
+    def __init__(self, color, position):
+        super().__init__("P", color, position)
     
     def movement_unpromoted(self, board):
         coordinates = []
@@ -284,9 +288,57 @@ class Pawn(Piece):
             coordinates.append((self.position[0] + 1, self.position[1]))
         return self.filter_moves(coordinates, board)
 
+    def valid_drops(self, board):  # Terminar de proliijar, falta que tenga en cuenta las reglas
+        empty_spaces = []                   # no se puede poner una ficha en un lugar q no se pueda mover
+        valid_locations = []
+        for row in range(9):                # tener en cuenta para PEON LANCE y KNIGHT
+            for col in range(9):            # PEON no puede jaquear
+                if board[row][col] == "   ":
+                    empty_spaces.append((row, col))
+        for coords in empty_spaces:
+            self.position = coords
+            if len(self.movement_unpromoted(board)) > 0:
+                valid_locations.append(coords)
+        return self.pawn_drop_rules(board, valid_locations)
+    
+    def pawn_drop_rules(self, board, valid_locations):
+        for row in range(9):
+            for col in range(9):
+                if board[row][col] != "   ":
+                    if board[row][col].name == "P" and board[row][col].color == self.color:
+                        if not board[row][col].promoted:
+                            for coords in valid_locations:
+                                if coords[1] == col:
+                                    valid_locations.remove(coords)
+                    if board[row][col].name == "K" and board[row][col].color != self.color:
+                        if self.color == "white" and (row + 1, col) in valid_locations:
+                            valid_locations.remove((row + 1, col))
+                        elif self.color == "black" and (row + 1, col) in valid_locations:
+                            valid_locations.remove((row + 1, col))
+        return valid_locations
+    
+    def update_position(self, row, column):
+        self.position = (row, column)
+        if not self.captured:
+            if self.color == "white" and self.position[0] < 3 and not self.promoted:
+                if self.position[0] == 0:
+                    self.promote()
+                    self.set_for_promotion = False
+                else:
+                    self.set_for_promotion = True
+            elif self.color == "black" and 5 < self.position[0] < 9 and not self.promoted:
+                if self.position[0] == 8:
+                    self.promote()
+                    self.set_for_promotion = False
+                else:
+                    self.set_for_promotion = True
+        else:
+            self.captured = False
+            self.set_for_promotion = False
+
 class Lance(Piece):
-    def __init__(self, color):
-        super().__init__("L", color)
+    def __init__(self, color, position):
+        super().__init__("L", color, position)
     
     def movement_unpromoted(self, board):
         coordinates = []
@@ -302,7 +354,7 @@ class Lance(Piece):
                 coordinates.append((current_row, self.position[1]))
                 current_row += 1
         return self.filter_moves(coordinates, board)
-        
+    
     def filter_moves(self, coordinates, board):
         filtered_moves = []
         for space in coordinates:
@@ -317,11 +369,30 @@ class Lance(Piece):
                     break
             elif not self.promoted:
                 break
-        return filtered_moves
+        return sorted(filtered_moves)
+
+    def update_position(self, row, column):
+        self.position = (row, column)
+        if not self.captured:
+            if self.color == "white" and self.position[0] < 3 and not self.promoted:
+                if self.position[0] == 0:
+                    self.promote()
+                    self.set_for_promotion = False
+                else:
+                    self.set_for_promotion = True
+            elif self.color == "black" and 5 < self.position[0] < 9 and not self.promoted:
+                if self.position[0] == 8:
+                    self.promote()
+                    self.set_for_promotion = False
+                else:
+                    self.set_for_promotion = True
+        else:
+            self.captured = False
+            self.set_for_promotion = False
 
 class Knight(Piece):
-    def __init__(self, color):
-        super().__init__("N", color)
+    def __init__(self, color, position):
+        super().__init__("N", color, position)
     
     def movement_unpromoted(self, board):
         coordinates = []
@@ -331,12 +402,30 @@ class Knight(Piece):
         elif self.color == "black":
             coordinates.append((self.position[0] + 2, self.position[1] - 1))
             coordinates.append((self.position[0] + 2, self.position[1] + 1))
+        return sorted(self.filter_moves(coordinates, board))
 
-        return self.filter_moves(coordinates, board)
+    def update_position(self, row, column):
+        self.position = (row, column)
+        if not self.captured:
+            if self.color == "white" and self.position[0] < 3 and not self.promoted:
+                if self.position[0] == 0 or self.position[0] == 1:
+                    self.promote()
+                    self.set_for_promotion = False
+                else:
+                    self.set_for_promotion = True
+            elif self.color == "black" and 5 < self.position[0] < 9 and not self.promoted:
+                if self.position[0] == 8 or self.position[0] == 7:
+                    self.promote()
+                    self.set_for_promotion = False
+                else:
+                    self.set_for_promotion = True
+        else:
+            self.captured = False
+            self.set_for_promotion = False
 
 class SilverGeneral(Piece):
-    def __init__(self, color):
-        super().__init__("S", color)
+    def __init__(self, color, position):
+        super().__init__("S", color, position)
 
     def movement_unpromoted(self, board):
         coordinates = [
@@ -349,11 +438,11 @@ class SilverGeneral(Piece):
             coordinates.append((self.position[0] - 1, self.position[1]))
         elif self.color == "black":
             coordinates.append((self.position[0] + 1, self.position[1]))
-        return self.filter_moves(coordinates, board)
+        return sorted(self.filter_moves(coordinates, board))
 
 class GoldGeneral(Piece):
-    def __init__(self, color):
-        super().__init__("G", color)
+    def __init__(self, color, position):
+        super().__init__("G", color, position)
 
     def movement_unpromoted(self, board):
         return self.movement_promoted(board)
@@ -361,9 +450,14 @@ class GoldGeneral(Piece):
     def promote(self):
         self.promoted = False
 
+    def update_position(self, row, column):
+        self.position = (row, column)
+        self.captured = False
+        self.set_for_promotion = False
+
 class King(Piece):
-    def __init__(self, color):
-        super().__init__("K", color)
+    def __init__(self, color, position):
+        super().__init__("K", color, position)
 
     def movement_unpromoted(self, board):
         coordinates = [
@@ -376,7 +470,7 @@ class King(Piece):
             (self.position[0] + 1, self.position[1]),
             (self.position[0] + 1, self.position[1] + 1),
         ]
-        return self.filter_moves(coordinates, board)
+        return sorted(self.filter_moves(coordinates, board))
 
     def movement_promoted(self, board):
         return self.movement_unpromoted(board)
@@ -384,9 +478,14 @@ class King(Piece):
     def promote(self):
         self.promoted = False
 
+    def update_position(self, row, column):
+        self.position = (row, column)
+        self.captured = False
+        self.set_for_promotion = False
+
 class Bishop(Piece):
-    def __init__(self, color):
-        super().__init__("B", color)
+    def __init__(self, color, position):
+        super().__init__("B", color, position)
 
     def movement_unpromoted(self, board):
         coordinates_nw = []
@@ -403,7 +502,7 @@ class Bishop(Piece):
         coordinates_final += self.filter_moves(coordinates_ne, board)
         coordinates_final += self.filter_moves(coordinates_sw, board)
         coordinates_final += self.filter_moves(coordinates_se, board)
-        return coordinates_final
+        return sorted(coordinates_final)
 
     def movement_promoted(self, board):
         coordinates = []
@@ -412,7 +511,7 @@ class Bishop(Piece):
         coordinates += self.filter_moves([(self.position[0], self.position[1] - 1)], board)
         coordinates += self.filter_moves([(self.position[0], self.position[1] + 1)], board)
         coordinates += self.movement_unpromoted(board)
-        return coordinates
+        return sorted(coordinates)
 
     def filter_moves(self, coordinates, board):
         filtered_moves = []
@@ -430,8 +529,8 @@ class Bishop(Piece):
         return filtered_moves
 
 class Rook(Piece):
-    def __init__(self, color):
-        super().__init__("R", color)
+    def __init__(self, color, position):
+        super().__init__("R", color, position)
 
     def movement_unpromoted(self, board):
         coordinates_up = []
@@ -448,7 +547,7 @@ class Rook(Piece):
         coordinates_final += self.filter_moves(coordinates_down, board)
         coordinates_final += self.filter_moves(coordinates_left, board)
         coordinates_final += self.filter_moves(coordinates_right, board)
-        return coordinates_final
+        return sorted(coordinates_final)
     
     def movement_promoted(self, board):
         coordinates = []
@@ -457,7 +556,7 @@ class Rook(Piece):
         coordinates += self.filter_moves([(self.position[0] + 1, self.position[1] - 1)], board)
         coordinates += self.filter_moves([(self.position[0] - 1, self.position[1] + 1)], board)
         coordinates += self.movement_unpromoted(board)
-        return coordinates
+        return sorted(coordinates)
     
     def filter_moves(self, coordinates, board):
         filtered_moves = []
