@@ -7,7 +7,7 @@ class Shogi():
         self.white_captures = []
         self.black_captures = []
 
-        self.lifted_piece = 0
+        self.lifted_piece = "No piece lifted"
         self.lifted_piece_coordinates = ("", "")
         self.is_playing = True
         self.playerturn = "white"
@@ -121,8 +121,7 @@ class Shogi():
             self.move_piece(int(row), int(column))
             self.clean_lifted_piece_origin_location()
             if self.is_playing:
-                #self.next_turn()
-                pass
+                self.next_turn()
             return True
         return False
 
@@ -152,19 +151,26 @@ class Shogi():
 
     def move_piece(self, row, column):
         if self.board[row][column] != "   ":
-            self.board[row][column].promoted = False
-            self.board[row][column].captured = True
-            if self.playerturn == "white":
-                self.board[row][column].color = "white"
-                self.white_captures.append(self.board[row][column])
-            elif self.playerturn == "black":
-                self.board[row][column].color = "black"
-                self.black_captures.append(self.board[row][column])
-            if self.board[row][column].__class__.__name__ == "King":
-                self.is_playing = False
+            self.capture_piece(row, column)
         self.board[row][column] = self.lifted_piece
         self.board[row][column].update_position(row, column)
-        self.lifted_piece = 0
+        self.lifted_piece = "No piece lifted"
+
+    def capture_piece(self, row, column):
+        self.board[row][column].promoted = False
+        self.board[row][column].captured = True
+        self.board[row][column].color = self.playerturn
+        self.current_player_captures().append(self.board[row][column])
+        if self.board[row][column].__class__.__name__ == "King":
+            self.is_playing = False
+        """if self.playerturn == "white":
+            self.board[row][column].color = "white"
+            self.white_captures.append(self.board[row][column])
+        elif self.playerturn == "black":
+            self.board[row][column].color = "black"
+            self.black_captures.append(self.board[row][column])
+        if self.board[row][column].__class__.__name__ == "King":
+            self.is_playing = False"""
 
     def clean_lifted_piece_origin_location(self):
         row, col = self.lifted_piece_coordinates
@@ -172,6 +178,7 @@ class Shogi():
             del self.current_player_captures()[col]
         else:
             self.board[row][col] = "   "
+        self.lifted_piece_coordinates = ("", "")
 
     def next_turn(self):
         if self.playerturn == "white":
@@ -260,9 +267,6 @@ class Piece():
             self.captured = False
             self.set_for_promotion = False
 
-    #def valid_drops(self, board):
-    #    return self.valid_drop_locations(board)
-
     def valid_drops(self, board):  # Terminar de proliijar, falta que tenga en cuenta las reglas
         empty_spaces = []                   # no se puede poner una ficha en un lugar q no se pueda mover
         valid_locations = []
@@ -302,19 +306,22 @@ class Pawn(Piece):
         return self.pawn_drop_rules(board, valid_locations)
     
     def pawn_drop_rules(self, board, valid_locations):
+        invalid_locations = []
         for row in range(9):
             for col in range(9):
                 if board[row][col] != "   ":
                     if board[row][col].name == "P" and board[row][col].color == self.color:
                         if not board[row][col].promoted:
                             for coords in valid_locations:
-                                if coords[1] == col:
-                                    valid_locations.remove(coords)
+                                if coords[1] == col and coords not in invalid_locations:
+                                    invalid_locations.append(coords)
                     if board[row][col].name == "K" and board[row][col].color != self.color:
-                        if self.color == "white" and (row + 1, col) in valid_locations:
-                            valid_locations.remove((row + 1, col))
-                        elif self.color == "black" and (row + 1, col) in valid_locations:
-                            valid_locations.remove((row + 1, col))
+                        if self.color == "white" and (row + 1, col) in valid_locations and (row + 1, col) not in invalid_locations:
+                            invalid_locations.append((row + 1, col))
+                        elif self.color == "black" and (row - 1, col) in valid_locations and (row - 1, col) not in invalid_locations:
+                            invalid_locations.append((row - 1, col))
+        for coords in invalid_locations:
+            valid_locations.remove(coords)
         return valid_locations
     
     def update_position(self, row, column):

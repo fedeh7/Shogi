@@ -1,4 +1,4 @@
-from shogi import Shogi, Rook, Lance
+from shogi import Shogi, Rook, Lance, Pawn
 
 
 class Interface():
@@ -35,9 +35,14 @@ class Interface():
     def start_playing(self):
         self.print_interface_instructions()
         self.game = Shogi()
-        self.game.board = self.sample_board
-        self.game.board[4][4] = Lance("white", (4, 4))
-        self.game.board[2][4] = Lance("white", (4, 4))
+        #self.game.board = self.sample_board
+        #self.game.board[4][4] = Lance("white", (4, 4))
+        #self.game.board[2][4] = Lance("white", (4, 4))
+        x = Pawn("black", (0, 0))
+        x.captured = True
+        self.game.playerturn = "black"
+        self.game.white_captures.append(x)
+        print(self.game.white_captures[0].valid_drops(self.game.board))
         while self.game.is_playing:
             self.turn_count += 1
             self.input_origin_coordinates()
