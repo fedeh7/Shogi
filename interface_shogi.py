@@ -7,6 +7,7 @@ class Interface():
         self.game = Shogi()
         self.turn_count = 0
 
+    # Inicia el loop del juego
     def start_playing(self):
         while self.game.is_playing:
             self.turn_count += 1
@@ -16,6 +17,7 @@ class Interface():
             f"### Congratulations! {self.game.playerturn} Wins "
             f"in {self.turn_count} turns! ###".title())
 
+    # Loop para el ingreso de coordenadas para seleccionar una pieza
     def input_origin_coordinates(self):
         input_correct = False
         while not input_correct:
@@ -30,6 +32,8 @@ class Interface():
                 input_correct = True
         return
 
+    # Loop para el ingreso de coordenadas para el destino de una pieza
+    # Si es valido, Pregunta si promocionar la pieza o no
     def input_destiny_coordinates(self):
         input_correct = False
         promote = ""
@@ -51,6 +55,7 @@ class Interface():
                         self.game.board[int(row)][int(column)].promote()
         return
 
+    # Imprime el tablero, el turno actual, y el jugador actual en pantalla
     def print_board(self):
         screen = self.game.board_print()
         symbol = ""

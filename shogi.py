@@ -15,6 +15,7 @@ class Shogi():
 
         self.pruebita = [0, 0, 0, 0, 0]
 
+    # Devuelve un string con el tablero y las capturas
     def board_print(self):
         screen = "\nCaptures-Black:\n "
         for col in range(len(self.black_captures)):
@@ -37,6 +38,8 @@ class Shogi():
             screen += f"{self.white_captures[piece]} "
         return screen
 
+    # Prepara el tablero vacio
+    # Luego ejecuta place_pieces para poblarlo con las piezas iniciales
     def set_board(self):
         self.board = []
         for row in range(9):
@@ -45,6 +48,7 @@ class Shogi():
                 self.board[row].append("   ")
         self.place_pieces()
 
+    # Puebla el tablero inicial con las piezas de ambos jugadores
     def place_pieces(self):
         row_1, row_2, row_3 = (0, 1, 2)
         pieces = [
@@ -62,6 +66,11 @@ class Shogi():
                 self.board[row_2][7] = Rook(color, (row_2, 7))
             row_1, row_2, row_3 = (8, 7, 6)
 
+    # Se ejecuta cuando se elige la pieza que se quiere mover
+    # Verifica que los valores de fila y columna sean validos
+    # Y que el lugar que se eligio contenga una pieza del color del jugador
+    # Si la pieza tiene movimientos posibles o puede ser reintroducida
+    # Levanta la pieza con lift_piece_for_movement
     def play_origin(self, row, col):
         self.error = ""
         if self.validate_origin_coordinates_values(row, col):
@@ -72,6 +81,7 @@ class Shogi():
         else:
             return False
 
+    # Verifica que los valores de fila y columna de play_origin sean validos
     def validate_origin_coordinates_values(self, row, col):
         try:
             row = int(row)
@@ -92,12 +102,16 @@ class Shogi():
             return False
         return True
 
+    # Devuelve las capturas del jugador actual
     def current_player_captures(self):
         if self.playerturn == "white":
             return self.white_captures
         elif self.playerturn == "black":
             return self.black_captures
 
+    # Verifica el lugar seleccionado
+    # Si contiene una pieza del color del jugador
+    # Y si esa pieza puede ser movida o reintroducida en algun lugar
     def validate_origin_coordinates_location(self, row, col):
         if row == 9 and len(self.current_player_captures()[col].valid_drops(self.board)) < 1:
             self.error = "Cant drop this piece anywhere right now!"
@@ -115,6 +129,7 @@ class Shogi():
             return False
         return True
 
+    # Guarda la pieza elegida y sus coordenadas para su uso mas adelante
     def lift_piece_for_movement(self, row, col):
         if row == 9:
             self.lifted_piece = self.current_player_captures()[col]
@@ -122,6 +137,9 @@ class Shogi():
             self.lifted_piece = self.board[row][col]
         self.lifted_piece_coordinates = (row, col)
 
+    # Se ejecuta cuando se elige a donde se quiere mover o reintroducir una pieza
+    # Verifica los valores de fila y columna
+    # Mueve o reintroduce la pieza en el lugar seleccionado y pasa el turno
     def play_destination(self, row, col):
         self.error = ""
         if self.validate_destination_coordinates(row, col):
@@ -132,6 +150,7 @@ class Shogi():
             return True
         return False
 
+    # Verifica los valores de fila y columna de play_destination
     def validate_destination_coordinates(self, row, col):
         try:
             row = int(row)
@@ -158,6 +177,8 @@ class Shogi():
             return False
         return True
 
+    # Mueve la pieza al lugar seleccionado
+    # Borra la pieza seleccionada en lifted_piece
     def move_piece(self, row, col):
         if self.board[row][col] != "   ":
             self.capture_piece(row, col)
@@ -165,6 +186,8 @@ class Shogi():
         self.board[row][col].update_position(row, col)
         self.lifted_piece = "No piece lifted"
 
+    # Si el lugar seleccionado tiene otra pieza, la captura
+    # Si esa pieza era el rey, el juego termina
     def capture_piece(self, row, col):
         self.board[row][col].promoted = False
         self.board[row][col].captured = True
@@ -173,6 +196,7 @@ class Shogi():
         if self.board[row][col].__class__.__name__ == "King":
             self.is_playing = False
 
+    # Borra la pieza reintroducida y las coordenadas en lifted_piece_cordinates
     def clean_lifted_piece_origin_location(self):
         row, col = self.lifted_piece_coordinates
         if row == 9:
@@ -181,15 +205,15 @@ class Shogi():
             self.board[row][col] = "   "
         self.lifted_piece_coordinates = ("", "")
 
+    # Pasa el turno
     def next_turn(self):
         if self.playerturn == "white":
             self.playerturn = "black"
         else:
             self.playerturn = "white"
 
-# Piece class starts here
 
-
+# Clase Padre para todas las piezas
 class Piece():
     def __init__(self, name, color, position):
         self.name = name
@@ -199,6 +223,7 @@ class Piece():
         self.captured = False
         self.set_for_promotion = False
 
+    # Evalua como se va a representar la pieza en el tablero
     def __repr__(self):
         promoted = ""
         if self.promoted:
@@ -209,10 +234,8 @@ class Piece():
             return promoted + self.name + "\u2227"
         elif self.color == "black":
             return promoted + self.name + "\u2228"
-        else:
-            # This is only for testing
-            return "-T*"
 
+    # Devuelve el conjunto de movimientos validos para la promocion actual
     def valid_moves(self, board):
         if not self.promoted:
             return self.movement_unpromoted(board)
@@ -220,9 +243,12 @@ class Piece():
             return self.movement_promoted(board)
         return False
 
+    # Calcula los movimientos validos sin promocion
+    # Cada pieza tiene sus propios movimientos definidos en su propia clase
     def movement_unpromoted(self, board):
         return
 
+    # Calcula los movimientos validos con promocion a GoldGeneral
     def movement_promoted(self, board):
         coordinates = [
             (self.position[0], self.position[1] - 1),
@@ -238,6 +264,8 @@ class Piece():
             coordinates.append((self.position[0] + 1, self.position[1] + 1))
         return sorted(self.filter_moves(coordinates, board))
 
+    # Filtra los movimientos validos anteriores
+    # Quita espacios imposibles, y espacios ocupados por fichas aliadas
     def filter_moves(self, coordinates, board):
         filtered_moves = []
         for space in coordinates:
@@ -250,10 +278,13 @@ class Piece():
                 filtered_moves.append(space)
         return filtered_moves
 
+    # Promociona la pieza, y le quita la posibilidad de promocion
     def promote(self):
         self.promoted = True
         self.set_for_promotion = False
 
+    # Actualiza la posision interna de la pieza para calcular sus movimientos
+    # Si es aplicable, se le posibilita a la pieza ser promocionada
     def update_position(self, row, col):
         self.position = (row, col)
         if not self.captured:
@@ -268,6 +299,7 @@ class Piece():
             self.captured = False
             self.set_for_promotion = False
 
+    # Busca los espacios donde es posible reintroducir la pieza
     def valid_drops(self, board):
         empty_spaces = []
         valid_locations = []
@@ -282,6 +314,7 @@ class Piece():
         return valid_locations
 
 
+# Peon
 class Pawn(Piece):
     def __init__(self, color, position):
         super().__init__("P", color, position)
@@ -307,6 +340,9 @@ class Pawn(Piece):
                 valid_locations.append(coords)
         return self.pawn_drop_rules(board, valid_locations)
 
+    # Reglas especiales para la reintroduccion del peon
+    # No puede reintroducirse en la misma columna que otro peon sin promocion
+    # No puede reintroducirse haciendo jaque al rey oponente
     def pawn_drop_rules(self, board, valid_locations):
         invalid_locations = []
         for row in range(9):
@@ -328,6 +364,8 @@ class Pawn(Piece):
             valid_locations.remove(coords)
         return valid_locations
 
+    # Ademas de actualizar la posicion interna
+    # Promociona al peon si llega a la ultima fila posible
     def update_position(self, row, col):
         self.position = (row, col)
         unpromoted = not self.promoted
@@ -350,6 +388,7 @@ class Pawn(Piece):
             self.set_for_promotion = False
 
 
+# Lancero
 class Lance(Piece):
     def __init__(self, color, position):
         super().__init__("L", color, position)
@@ -385,6 +424,8 @@ class Lance(Piece):
                 break
         return sorted(filtered_moves)
 
+    # Ademas de actualizar la posicion interna
+    # Promociona al lancero si llega a la ultima fila posible
     def update_position(self, row, col):
         self.position = (row, col)
         unpromoted = not self.promoted
@@ -407,6 +448,7 @@ class Lance(Piece):
             self.set_for_promotion = False
 
 
+# Caballero
 class Knight(Piece):
     def __init__(self, color, position):
         super().__init__("N", color, position)
@@ -421,6 +463,8 @@ class Knight(Piece):
             coordinates.append((self.position[0] + 2, self.position[1] + 1))
         return sorted(self.filter_moves(coordinates, board))
 
+    # Ademas de actualizar la posicion interna
+    # Promociona al caballero si llega a la ultima fila posible
     def update_position(self, row, col):
         self.position = (row, col)
         unpromoted = not self.promoted
@@ -443,6 +487,7 @@ class Knight(Piece):
             self.set_for_promotion = False
 
 
+# General de plata
 class SilverGeneral(Piece):
     def __init__(self, color, position):
         super().__init__("S", color, position)
@@ -461,6 +506,7 @@ class SilverGeneral(Piece):
         return sorted(self.filter_moves(coordinates, board))
 
 
+# General de oro
 class GoldGeneral(Piece):
     def __init__(self, color, position):
         super().__init__("G", color, position)
@@ -468,15 +514,18 @@ class GoldGeneral(Piece):
     def movement_unpromoted(self, board):
         return self.movement_promoted(board)
 
+    # El General de oro no se promociona
     def promote(self):
         self.promoted = False
 
+    # El general de oro no tiene posibilidad de promocion
     def update_position(self, row, col):
         self.position = (row, col)
         self.captured = False
         self.set_for_promotion = False
 
 
+# Rey
 class King(Piece):
     def __init__(self, color, position):
         super().__init__("K", color, position)
@@ -497,15 +546,18 @@ class King(Piece):
     def movement_promoted(self, board):
         return self.movement_unpromoted(board)
 
+    # El rey no se promociona
     def promote(self):
         self.promoted = False
 
+    # El rey no tiene posibilidad de promocion
     def update_position(self, row, col):
         self.position = (row, col)
         self.captured = False
         self.set_for_promotion = False
 
 
+# Alfil
 class Bishop(Piece):
     def __init__(self, color, position):
         super().__init__("B", color, position)
@@ -554,6 +606,7 @@ class Bishop(Piece):
         return filtered_moves
 
 
+# Torre
 class Rook(Piece):
     def __init__(self, color, position):
         super().__init__("R", color, position)
