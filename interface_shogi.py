@@ -3,7 +3,6 @@ from shogi import Shogi, Rook, Lance, Pawn
 
 class Interface():
 
-
     def __init__(self):
         self.game = Shogi()
         self.turn_count = 0
@@ -13,8 +12,10 @@ class Interface():
             self.turn_count += 1
             self.input_origin_coordinates()
             self.input_destiny_coordinates()
-        print(f"### Congratulations! {self.game.playerturn} Wins in {self.turn_count} turns! ###".title())
-    
+        print(
+            f"### Congratulations! {self.game.playerturn} Wins "
+            f"in {self.turn_count} turns! ###".title())
+
     def input_origin_coordinates(self):
         input_correct = False
         while not input_correct:
@@ -42,19 +43,25 @@ class Interface():
                 input_correct = True
                 if self.game.board[int(row)][int(column)].set_for_promotion:
                     while promote != "y" and promote != "n":
-                        promote = input("Do you want to promote the piece?(y/n): ").lower()
+                        promote = input(
+                            "Do you want to promote the piece?(y/n): ").lower()
                         if promote != "y" and promote != "n":
                             print("Enter 'y' or 'n'")
                     if promote == "y":
                         self.game.board[int(row)][int(column)].promote()
         return
-    
+
     def print_board(self):
         screen = self.game.board_print()
+        symbol = ""
         if self.game.playerturn == "white":
-            screen += f"\n========= #{self.turn_count} {self.game.playerturn}(\u039b) Turn =========\n".title()
+            symbol = "(\u039b)"
         elif self.game.playerturn == "black":
-            screen += f"\n========= #{self.turn_count} {self.game.playerturn}(V) Turn =========\n".title()
+            symbol = "(V)"
+        turn_indicator = (
+            f"\n======== #{self.turn_count} "
+            f"{self.game.playerturn}{symbol} Turn ========\n".title())
+        screen += turn_indicator
         return screen
 
 if __name__ == "__main__":

@@ -2,6 +2,7 @@ import unittest
 from parameterized import parameterized
 from shogi import Shogi, Piece, Pawn, Lance, Knight, SilverGeneral, GoldGeneral, King, Bishop, Rook
 
+
 class TestShogi(unittest.TestCase):
 
     def setUp(self):
@@ -35,33 +36,36 @@ class TestShogi(unittest.TestCase):
         self.assertEqual(self.game.error, "")
         self.assertEqual(self.game.white_captures, [])
         self.assertEqual(self.game.black_captures, [])
-    
+
     @parameterized.expand([
         ("black", (0, 1, 2)),
         ("white", (8, 7, 6)),
         ])
     def test_board_valid(self, color, rows):
-        king_row, rook_row, pawn_row = rows
-        pieces = ["Lance", "Knight", "SilverGeneral", "GoldGeneral", "King", "GoldGeneral", "SilverGeneral", "Knight", "Lance"]
-        reversed_row = ["   ", "Bishop", "   ", "   ", "   ", "   ", "   ", "Rook", "   "]
+        row_1, row_2, row_3 = rows
+        pieces = [
+            "Lance", "Knight", "SilverGeneral",
+            "GoldGeneral", "King", "GoldGeneral",
+            "SilverGeneral", "Knight", "Lance"]
+        reversed_row = [
+            "   ", "Bishop", "   ",
+            "   ", "   ", "   ",
+            "   ", "Rook", "   "]
         if color == "black":
-            reversed_row.reverse() 
+            reversed_row.reverse()
         for col in range(9):
-            self.assertTrue(self.game.board[pawn_row][col].__class__.__name__ == "Pawn")
-            self.assertEqual(self.game.board[pawn_row][col].color, color)
-            self.assertTrue(self.game.board[king_row][col].__class__.__name__ == pieces[col])
-            self.assertEqual(self.game.board[king_row][col].color, color)
-            if self.game.board[rook_row][col] != "   ":
+            self.assertTrue(self.game.board[row_3][col].__class__.__name__ == "Pawn")
+            self.assertEqual(self.game.board[row_3][col].color, color)
+            self.assertTrue(self.game.board[row_1][col].__class__.__name__ == pieces[col])
+            self.assertEqual(self.game.board[row_1][col].color, color)
+            if self.game.board[row_2][col] != "   ":
                 if color == "white":
-                    self.assertTrue(self.game.board[rook_row][col].__class__.__name__ == reversed_row[col])
-                    self.assertEqual(self.game.board[king_row][col].color, color)
+                    self.assertTrue(self.game.board[row_2][col].__class__.__name__ == reversed_row[col])
+                    self.assertEqual(self.game.board[row_1][col].color, color)
                 elif color == "black":
-                    self.assertTrue(self.game.board[rook_row][col].__class__.__name__ == reversed_row[col])
-                    self.assertEqual(self.game.board[king_row][col].color, color)
+                    self.assertTrue(self.game.board[row_2][col].__class__.__name__ == reversed_row[col])
+                    self.assertEqual(self.game.board[row_1][col].color, color)
 
-#######################################################################################################
-####################################### Pieces Tests ##################################################
-#######################################################################################################
     @parameterized.expand([
         ("white", "\u2227", (7, 1)),
         ("black", "\u2228", (2, 4)),
@@ -87,7 +91,7 @@ class TestShogi(unittest.TestCase):
         self.assertFalse(lance.set_for_promotion)
         self.assertFalse(lance.captured)
         self.assertEqual(str(lance), f" L{orientation}")
-    
+
     @parameterized.expand([
         ("white", "\u2227", (7, 1)),
         ("black", "\u2228", (2, 4)),
@@ -100,7 +104,7 @@ class TestShogi(unittest.TestCase):
         self.assertFalse(knight.set_for_promotion)
         self.assertFalse(knight.captured)
         self.assertEqual(str(knight), f" N{orientation}")
-    
+
     @parameterized.expand([
         ("white", "\u2227", (7, 1)),
         ("black", "\u2228", (2, 4)),
@@ -113,7 +117,7 @@ class TestShogi(unittest.TestCase):
         self.assertFalse(silvergeneral.set_for_promotion)
         self.assertFalse(silvergeneral.captured)
         self.assertEqual(str(silvergeneral), f" S{orientation}")
-    
+
     @parameterized.expand([
         ("white", "\u2227", (7, 1)),
         ("black", "\u2228", (2, 4)),
@@ -126,7 +130,7 @@ class TestShogi(unittest.TestCase):
         self.assertFalse(goldgeneral.set_for_promotion)
         self.assertFalse(goldgeneral.captured)
         self.assertEqual(str(goldgeneral), f" G{orientation}")
-    
+
     @parameterized.expand([
         ("white", "\u2227", (7, 1)),
         ("black", "\u2228", (2, 4)),
@@ -139,7 +143,7 @@ class TestShogi(unittest.TestCase):
         self.assertFalse(king.set_for_promotion)
         self.assertFalse(king.captured)
         self.assertEqual(str(king), f" K{orientation}")
-    
+
     @parameterized.expand([
         ("white", "\u2227", (7, 1)),
         ("black", "\u2228", (2, 4)),
@@ -152,7 +156,7 @@ class TestShogi(unittest.TestCase):
         self.assertFalse(bishop.set_for_promotion)
         self.assertFalse(bishop.captured)
         self.assertEqual(str(bishop), f" B{orientation}")
-    
+
     @parameterized.expand([
         ("white", "\u2227", (7, 1)),
         ("black", "\u2228", (2, 4)),
@@ -170,190 +174,248 @@ class TestShogi(unittest.TestCase):
         ("white", [(3, 4)], [], [(3, 4)]),
         ("black", [(5, 4)], [], [(5, 4)]),
     ])
-    def test_pawn_moves_unpromoted(self, color, valid_moves, movement_hindered, move_to_capture):
+    def test_pawn_moves_unpromoted(self, color, valid, obstacle, capture):
         self.game.board = self.sample_board
         self.game.board[4][4] = Pawn(color, (4, 4))
-        self.assertEqual(self.game.board[4][4].movement_unpromoted(self.game.board), valid_moves)
+        self.assertEqual(
+            self.game.board[4][4].movement_unpromoted(self.game.board),
+            valid)
         self.game.board[3][4] = self.game.board[5][4] = Pawn(color, (1, 1))
-        self.assertEqual(self.game.board[4][4].movement_unpromoted(self.game.board), movement_hindered)
-        self.game.board[3][4] = self.game.board[5][4] = Pawn("test-color", (1, 1))
-        self.assertEqual(self.game.board[4][4].movement_unpromoted(self.game.board), move_to_capture)
-    
+        self.assertEqual(
+            self.game.board[4][4].movement_unpromoted(self.game.board),
+            obstacle)
+        self.game.board[3][4] = self.game.board[5][4] = Pawn("color", (1, 1))
+        self.assertEqual(
+            self.game.board[4][4].movement_unpromoted(self.game.board),
+            capture)
+
     @parameterized.expand([
-        ("white", [(0, 4), (1, 4), (2, 4), (3, 4)], [(2, 4), (3, 4)], [(1, 4), (2, 4), (3, 4)]),
-        ("black", [(5, 4), (6, 4), (7, 4), (8, 4)], [(5, 4), (6, 4)], [(5, 4), (6, 4), (7, 4)]),
+        ("white",
+            [(0, 4), (1, 4), (2, 4), (3, 4)], [(2, 4), (3, 4)], [(1, 4), (2, 4), (3, 4)]),
+        ("black",
+            [(5, 4), (6, 4), (7, 4), (8, 4)], [(5, 4), (6, 4)], [(5, 4), (6, 4), (7, 4)]),
     ])
-    def test_lance_moves_unpromoted(self, color, valid_moves, movement_hindered, move_to_capture):
+    def test_lance_moves_unpromoted(self, color, valid, obstacle, capture):
         self.game.board = self.sample_board
         self.game.board[4][4] = Lance(color, (4, 4))
-        self.assertEqual(self.game.board[4][4].movement_unpromoted(self.game.board), valid_moves)
+        self.assertEqual(
+            self.game.board[4][4].movement_unpromoted(self.game.board),
+            valid)
         self.game.board[1][4] = self.game.board[7][4] = Pawn(color, (1, 1))
-        self.assertEqual(self.game.board[4][4].movement_unpromoted(self.game.board), movement_hindered)
-        self.game.board[1][4] = self.game.board[7][4] = Pawn("test-color", (1, 1))
-        self.assertEqual(self.game.board[4][4].movement_unpromoted(self.game.board), move_to_capture)
+        self.assertEqual(
+            self.game.board[4][4].movement_unpromoted(self.game.board),
+            obstacle)
+        self.game.board[1][4] = self.game.board[7][4] = Pawn("color", (1, 1))
+        self.assertEqual(
+            self.game.board[4][4].movement_unpromoted(self.game.board),
+            capture)
 
     @parameterized.expand([
         ("white", [(2, 3), (2, 5)], [(2, 3)], [(2, 3), (2, 5)]),
         ("black", [(6, 3), (6, 5)], [(6, 3)], [(6, 3), (6, 5)]),
     ])
-    def test_knight_moves_unpromoted(self, color, valid_moves, movement_hindered, move_to_capture):
+    def test_knight_moves_unpromoted(self, color, valid, obstacle, capture):
         self.game.board = self.sample_board
         self.game.board[4][4] = Knight(color, (4, 4))
-        self.assertEqual(self.game.board[4][4].movement_unpromoted(self.game.board), valid_moves)
+        self.assertEqual(
+            self.game.board[4][4].movement_unpromoted(self.game.board),
+            valid)
         self.game.board[2][5] = self.game.board[6][5] = Pawn(color, (1, 1))
-        self.assertEqual(self.game.board[4][4].movement_unpromoted(self.game.board), movement_hindered)
-        self.game.board[2][5] = self.game.board[6][5] = Pawn("test-color", (1, 1))
-        self.assertEqual(self.game.board[4][4].movement_unpromoted(self.game.board), move_to_capture)
-    
+        self.assertEqual(
+            self.game.board[4][4].movement_unpromoted(self.game.board),
+            obstacle)
+        self.game.board[2][5] = self.game.board[6][5] = Pawn("color", (1, 1))
+        self.assertEqual(
+            self.game.board[4][4].movement_unpromoted(self.game.board),
+            capture)
+
     @parameterized.expand([
-        ("white", [(3, 3), (3, 4), (3, 5), (5, 3), (5, 5)], 
-        [(3, 3), (3, 5), (5, 3), (5, 5)], 
-        [(3, 3), (3, 4), (3, 5), (5, 3), (5, 5)]
-        ),
-        ("black", [(3, 3), (3, 5), (5, 3), (5, 4), (5, 5)], 
-        [(3, 3), (3, 5), (5, 3), (5, 5)], 
-        [(3, 3), (3, 5), (5, 3), (5, 4), (5, 5)]
-        ),
+        ("white",
+            [(3, 3), (3, 4), (3, 5), (5, 3), (5, 5)],
+            [(3, 3), (3, 5), (5, 3), (5, 5)],
+            [(3, 3), (3, 4), (3, 5), (5, 3), (5, 5)]),
+        ("black",
+            [(3, 3), (3, 5), (5, 3), (5, 4), (5, 5)],
+            [(3, 3), (3, 5), (5, 3), (5, 5)],
+            [(3, 3), (3, 5), (5, 3), (5, 4), (5, 5)]),
     ])
-    def test_silvergeneral_moves_unpromoted(self, color, valid_moves, movement_hindered, move_to_capture):
+    def test_silvergeneral_moves_unpromoted(self, color, valid, obstacle, capture):
         self.game.board = self.sample_board
         self.game.board[4][4] = SilverGeneral(color, (4, 4))
-        self.assertEqual(self.game.board[4][4].movement_unpromoted(self.game.board), valid_moves)
+        self.assertEqual(
+            self.game.board[4][4].movement_unpromoted(self.game.board),
+            valid)
         self.game.board[5][4] = self.game.board[3][4] = Pawn(color, (1, 1))
-        self.assertEqual(self.game.board[4][4].movement_unpromoted(self.game.board), movement_hindered)
-        self.game.board[5][4] = self.game.board[3][4] = Pawn("test-color", (1, 1))
-        self.assertEqual(self.game.board[4][4].movement_unpromoted(self.game.board), move_to_capture)
-    
+        self.assertEqual(
+            self.game.board[4][4].movement_unpromoted(self.game.board),
+            obstacle)
+        self.game.board[5][4] = self.game.board[3][4] = Pawn("color", (1, 1))
+        self.assertEqual(
+            self.game.board[4][4].movement_unpromoted(self.game.board),
+            capture)
+
     @parameterized.expand([
-        ("white", [(3, 3), (3, 4), (3, 5), (4, 3), (4, 5), (5, 4)], 
-        [(3, 3),(3, 5), (4, 3), (4, 5)], 
-        [(3, 3), (3, 4), (3, 5), (4, 3), (4, 5), (5, 4)]
-        ),
-        ("black", [(3, 4), (4, 3), (4, 5), (5, 3), (5, 4), (5, 5)], 
-        [(4, 3), (4, 5), (5, 3),(5, 5)], 
-        [(3, 4), (4, 3), (4, 5), (5, 3), (5, 4), (5, 5)]
-        ),
+        ("white",
+            [(3, 3), (3, 4), (3, 5), (4, 3), (4, 5), (5, 4)],
+            [(3, 3), (3, 5), (4, 3), (4, 5)],
+            [(3, 3), (3, 4), (3, 5), (4, 3), (4, 5), (5, 4)]),
+        ("black",
+            [(3, 4), (4, 3), (4, 5), (5, 3), (5, 4), (5, 5)],
+            [(4, 3), (4, 5), (5, 3), (5, 5)],
+            [(3, 4), (4, 3), (4, 5), (5, 3), (5, 4), (5, 5)]),
     ])
-    def test_goldgeneral_moves_unpromoted(self, color, valid_moves, movement_hindered, move_to_capture):
+    def test_goldgeneral_moves(self, color, valid, obstacle, capture):
         self.game.board = self.sample_board
         self.game.board[4][4] = GoldGeneral(color, (4, 4))
-        self.assertEqual(self.game.board[4][4].movement_unpromoted(self.game.board), valid_moves)
+        self.assertEqual(
+            self.game.board[4][4].movement_unpromoted(self.game.board),
+            valid)
         self.game.board[5][4] = self.game.board[3][4] = Pawn(color, (1, 1))
-        self.assertEqual(self.game.board[4][4].movement_unpromoted(self.game.board), movement_hindered)
-        self.game.board[5][4] = self.game.board[3][4] = Pawn("test-color", (1, 1))
-        self.assertEqual(self.game.board[4][4].movement_unpromoted(self.game.board), move_to_capture)
-    
+        self.assertEqual(
+            self.game.board[4][4].movement_unpromoted(self.game.board),
+            obstacle)
+        self.game.board[5][4] = self.game.board[3][4] = Pawn("color", (1, 1))
+        self.assertEqual(
+            self.game.board[4][4].movement_unpromoted(self.game.board),
+            capture)
+
     @parameterized.expand([
-        ("white", [(3, 3), (3, 4), (3, 5), (4, 3), (4, 5), (5, 4)], 
-        [(3, 3),(3, 5), (4, 3), (4, 5)], 
-        [(3, 3), (3, 4), (3, 5), (4, 3), (4, 5), (5, 4)]
-        ),
-        ("black", [(3, 4), (4, 3), (4, 5), (5, 3), (5, 4), (5, 5)], 
-        [(4, 3), (4, 5), (5, 3),(5, 5)], 
-        [(3, 4), (4, 3), (4, 5), (5, 3), (5, 4), (5, 5)]
-        ),
+        ("white",
+            [(3, 3), (3, 4), (3, 5), (4, 3), (4, 5), (5, 4)],
+            [(3, 3), (3, 5), (4, 3), (4, 5)],
+            [(3, 3), (3, 4), (3, 5), (4, 3), (4, 5), (5, 4)]),
+        ("black",
+            [(3, 4), (4, 3), (4, 5), (5, 3), (5, 4), (5, 5)],
+            [(4, 3), (4, 5), (5, 3), (5, 5)],
+            [(3, 4), (4, 3), (4, 5), (5, 3), (5, 4), (5, 5)]),
     ])
-    def test_pieces_promoted_to_goldgeneral(self, color, valid_moves, movement_hindered, move_to_capture):
+    def test_normal_pieces_promoted(self, color, valid, obstacle, capture):
         pieces = [Pawn, Lance, Knight, SilverGeneral]
         self.game.board = self.sample_board
         for piece in pieces:
             self.game.board[4][4] = piece(color, (4, 4))
             self.game.board[4][4].promote()
-            self.assertEqual(self.game.board[4][4].movement_promoted(self.game.board), valid_moves)
+            self.assertEqual(self.game.board[4][4].movement_promoted(self.game.board), valid)
             self.game.board[5][4] = self.game.board[3][4] = Pawn(color, (1, 1))
-            self.assertEqual(self.game.board[4][4].movement_promoted(self.game.board), movement_hindered)
-            self.game.board[5][4] = self.game.board[3][4] = Pawn("test-color", (1, 1))
-            self.assertEqual(self.game.board[4][4].movement_promoted(self.game.board), move_to_capture)
-        
-    @parameterized.expand([
-        ("white", [(0, 4), (1, 4), (2, 4), (3, 4), (4, 0), (4, 1), (4, 2), (4, 3), (4, 5), (4, 6), (4, 7), (4, 8), (5, 4), (6, 4), (7, 4), (8, 4)], 
-        [(0, 4), (1, 4), (2, 4), (3, 4), (4, 3), (4, 5),(5, 4), (6, 4), (7, 4), (8, 4)], 
-        [(0, 4), (1, 4), (2, 4), (3, 4), (4, 2), (4, 3), (4, 5), (4, 6),(5, 4), (6, 4), (7, 4), (8, 4)]
-        ),
-        ("black", [(0, 4), (1, 4), (2, 4), (3, 4), (4, 0), (4, 1), (4, 2), (4, 3), (4, 5), (4, 6), (4, 7), (4, 8), (5, 4), (6, 4), (7, 4), (8, 4)], 
-        [(0, 4), (1, 4), (2, 4), (3, 4), (4, 3), (4, 5),(5, 4), (6, 4), (7, 4), (8, 4)], 
-        [(0, 4), (1, 4), (2, 4), (3, 4), (4, 2), (4, 3), (4, 5), (4, 6),(5, 4), (6, 4), (7, 4), (8, 4)]
-        ),
-    ])
-    def test_rook_moves_unpromoted(self, color, valid_moves, movement_hindered, move_to_capture):
-        self.game.board = self.sample_board
-        self.game.board[4][4] = Rook(color, (4, 4))
-        self.assertEqual(self.game.board[4][4].movement_unpromoted(self.game.board), valid_moves)
-        self.game.board[4][2] = self.game.board[4][6] = Pawn(color, (1, 1))
-        self.assertEqual(self.game.board[4][4].movement_unpromoted(self.game.board), movement_hindered)
-        self.game.board[4][2] = self.game.board[4][6] = Pawn("test-color", (1, 1))
-        self.assertEqual(self.game.board[4][4].movement_unpromoted(self.game.board), move_to_capture)
-    
-    @parameterized.expand([
-        ("white", [(0, 4), (1, 4), (2, 4), (3, 3), (3, 4), (3, 5), (4, 0), (4, 1), (4, 2), (4, 3), (4, 5), (4, 6), (4, 7), (4, 8), (5, 3), (5, 4), (5, 5), (6, 4), (7, 4), (8, 4)], 
-        [(0, 4), (1, 4), (2, 4), (3, 3), (3, 4), (3, 5), (4, 3), (4, 5), (5, 3), (5, 4), (5, 5), (6, 4), (7, 4), (8, 4)], 
-        [(0, 4), (1, 4), (2, 4), (3, 3), (3, 4), (3, 5), (4, 2), (4, 3), (4, 5), (4, 6), (5, 3), (5, 4), (5, 5), (6, 4), (7, 4), (8, 4)]
-        ),
-        ("black", [(0, 4), (1, 4), (2, 4), (3, 3), (3, 4), (3, 5), (4, 0), (4, 1), (4, 2), (4, 3), (4, 5), (4, 6), (4, 7), (4, 8), (5, 3), (5, 4), (5, 5), (6, 4), (7, 4), (8, 4)], 
-        [(0, 4), (1, 4), (2, 4), (3, 3), (3, 4), (3, 5), (4, 3), (4, 5), (5, 3), (5, 4), (5, 5), (6, 4), (7, 4), (8, 4)], 
-        [(0, 4), (1, 4), (2, 4), (3, 3), (3, 4), (3, 5), (4, 2), (4, 3), (4, 5), (4, 6), (5, 3), (5, 4), (5, 5), (6, 4), (7, 4), (8, 4)]
-        ),
-    ])
-    def test_rook_moves_promoted(self, color, valid_moves, movement_hindered, move_to_capture):
-        self.game.board = self.sample_board
-        self.game.board[4][4] = Rook(color, (4, 4))
-        self.game.board[4][4].promote()
-        self.assertEqual(self.game.board[4][4].movement_promoted(self.game.board), valid_moves)
-        self.game.board[4][2] = self.game.board[4][6] = Pawn(color, (1, 1))
-        self.assertEqual(self.game.board[4][4].movement_promoted(self.game.board), movement_hindered)
-        self.game.board[4][2] = self.game.board[4][6] = Pawn("test-color", (1, 1))
-        self.assertEqual(self.game.board[4][4].movement_promoted(self.game.board), move_to_capture)
+            self.assertEqual(self.game.board[4][4].movement_promoted(self.game.board), obstacle)
+            self.game.board[5][4] = self.game.board[3][4] = Pawn("color", (1, 1))
+            self.assertEqual(self.game.board[4][4].movement_promoted(self.game.board), capture)
 
     @parameterized.expand([
-        ("white", [(0, 0), (0, 8), (1, 1), (1, 7), (2, 2), (2, 6), (3, 3), (3, 5), (5, 3), (5, 5), (6, 2), (6, 6), (7, 1), (7, 7), (8, 0), (8, 8)], 
-        [(3, 3), (3, 5), (5, 3), (5, 5), (6, 2), (6, 6), (7, 1), (7, 7), (8, 0), (8, 8)],
-        [(2, 2), (2, 6), (3, 3), (3, 5), (5, 3), (5, 5), (6, 2), (6, 6), (7, 1), (7, 7), (8, 0), (8, 8)],
-        ),
-        ("black", [(0, 0), (0, 8), (1, 1), (1, 7), (2, 2), (2, 6), (3, 3), (3, 5), (5, 3), (5, 5), (6, 2), (6, 6), (7, 1), (7, 7), (8, 0), (8, 8)], 
-        [(3, 3), (3, 5), (5, 3), (5, 5), (6, 2), (6, 6), (7, 1), (7, 7), (8, 0), (8, 8)],
-        [(2, 2), (2, 6), (3, 3), (3, 5), (5, 3), (5, 5), (6, 2), (6, 6), (7, 1), (7, 7), (8, 0), (8, 8)],
-        ),
+        ("white",
+            [(0, 4), (1, 4), (2, 4), (3, 4), (4, 0), (4, 1), (4, 2), (4, 3), (4, 5), (4, 6), (4, 7), (4, 8), (5, 4), (6, 4), (7, 4), (8, 4)],
+            [(0, 4), (1, 4), (2, 4), (3, 4), (4, 3), (4, 5), (5, 4), (6, 4), (7, 4), (8, 4)],
+            [(0, 4), (1, 4), (2, 4), (3, 4), (4, 2), (4, 3), (4, 5), (4, 6), (5, 4), (6, 4), (7, 4), (8, 4)]),
+        ("black",
+            [(0, 4), (1, 4), (2, 4), (3, 4), (4, 0), (4, 1), (4, 2), (4, 3), (4, 5), (4, 6), (4, 7), (4, 8), (5, 4), (6, 4), (7, 4), (8, 4)],
+            [(0, 4), (1, 4), (2, 4), (3, 4), (4, 3), (4, 5), (5, 4), (6, 4), (7, 4), (8, 4)],
+            [(0, 4), (1, 4), (2, 4), (3, 4), (4, 2), (4, 3), (4, 5), (4, 6), (5, 4), (6, 4), (7, 4), (8, 4)]),
     ])
-    def test_bishop_moves_unpromoted(self, color, valid_moves, movement_hindered, move_to_capture):
+    def test_rook_moves_unpromoted(self, color, valid, obstacle, capture):
+        self.game.board = self.sample_board
+        self.game.board[4][4] = Rook(color, (4, 4))
+        self.assertEqual(
+            self.game.board[4][4].movement_unpromoted(self.game.board),
+            valid)
+        self.game.board[4][2] = self.game.board[4][6] = Pawn(color, (1, 1))
+        self.assertEqual(
+            self.game.board[4][4].movement_unpromoted(self.game.board),
+            obstacle)
+        self.game.board[4][2] = self.game.board[4][6] = Pawn("color", (1, 1))
+        self.assertEqual(
+            self.game.board[4][4].movement_unpromoted(self.game.board),
+            capture)
+
+    @parameterized.expand([
+        ("white",
+            [(0, 4), (1, 4), (2, 4), (3, 3), (3, 4), (3, 5), (4, 0), (4, 1), (4, 2), (4, 3), (4, 5), (4, 6), (4, 7), (4, 8), (5, 3), (5, 4), (5, 5), (6, 4), (7, 4), (8, 4)],
+            [(0, 4), (1, 4), (2, 4), (3, 3), (3, 4), (3, 5), (4, 3), (4, 5), (5, 3), (5, 4), (5, 5), (6, 4), (7, 4), (8, 4)],
+            [(0, 4), (1, 4), (2, 4), (3, 3), (3, 4), (3, 5), (4, 2), (4, 3), (4, 5), (4, 6), (5, 3), (5, 4), (5, 5), (6, 4), (7, 4), (8, 4)]),
+        ("black",
+            [(0, 4), (1, 4), (2, 4), (3, 3), (3, 4), (3, 5), (4, 0), (4, 1), (4, 2), (4, 3), (4, 5), (4, 6), (4, 7), (4, 8), (5, 3), (5, 4), (5, 5), (6, 4), (7, 4), (8, 4)],
+            [(0, 4), (1, 4), (2, 4), (3, 3), (3, 4), (3, 5), (4, 3), (4, 5), (5, 3), (5, 4), (5, 5), (6, 4), (7, 4), (8, 4)],
+            [(0, 4), (1, 4), (2, 4), (3, 3), (3, 4), (3, 5), (4, 2), (4, 3), (4, 5), (4, 6), (5, 3), (5, 4), (5, 5), (6, 4), (7, 4), (8, 4)]),
+    ])
+    def test_rook_moves_promoted(self, color, valid, obstacle, capture):
+        self.game.board = self.sample_board
+        self.game.board[4][4] = Rook(color, (4, 4))
+        self.game.board[4][4].promote()
+        self.assertEqual(
+            self.game.board[4][4].movement_promoted(self.game.board),
+            valid)
+        self.game.board[4][2] = self.game.board[4][6] = Pawn(color, (1, 1))
+        self.assertEqual(
+            self.game.board[4][4].movement_promoted(self.game.board),
+            obstacle)
+        self.game.board[4][2] = self.game.board[4][6] = Pawn("color", (1, 1))
+        self.assertEqual(
+            self.game.board[4][4].movement_promoted(self.game.board),
+            capture)
+
+    @parameterized.expand([
+        ("white",
+            [(0, 0), (0, 8), (1, 1), (1, 7), (2, 2), (2, 6), (3, 3), (3, 5), (5, 3), (5, 5), (6, 2), (6, 6), (7, 1), (7, 7), (8, 0), (8, 8)],
+            [(3, 3), (3, 5), (5, 3), (5, 5), (6, 2), (6, 6), (7, 1), (7, 7), (8, 0), (8, 8)],
+            [(2, 2), (2, 6), (3, 3), (3, 5), (5, 3), (5, 5), (6, 2), (6, 6), (7, 1), (7, 7), (8, 0), (8, 8)],),
+        ("black",
+            [(0, 0), (0, 8), (1, 1), (1, 7), (2, 2), (2, 6), (3, 3), (3, 5), (5, 3), (5, 5), (6, 2), (6, 6), (7, 1), (7, 7), (8, 0), (8, 8)],
+            [(3, 3), (3, 5), (5, 3), (5, 5), (6, 2), (6, 6), (7, 1), (7, 7), (8, 0), (8, 8)],
+            [(2, 2), (2, 6), (3, 3), (3, 5), (5, 3), (5, 5), (6, 2), (6, 6), (7, 1), (7, 7), (8, 0), (8, 8)],),
+    ])
+    def test_bishop_moves_unpromoted(self, color, valid, obstacle, capture):
         self.game.board = self.sample_board
         self.game.board[4][4] = Bishop(color, (4, 4))
-        self.assertEqual(self.game.board[4][4].movement_unpromoted(self.game.board), valid_moves)
+        self.assertEqual(
+            self.game.board[4][4].movement_unpromoted(self.game.board),
+            valid)
         self.game.board[2][2] = self.game.board[2][6] = Pawn(color, (1, 1))
-        self.assertEqual(self.game.board[4][4].movement_unpromoted(self.game.board), movement_hindered)
-        self.game.board[2][2] = self.game.board[2][6] = Pawn("test-color", (1, 1))
-        self.assertEqual(self.game.board[4][4].movement_unpromoted(self.game.board), move_to_capture)
-    
+        self.assertEqual(
+            self.game.board[4][4].movement_unpromoted(self.game.board),
+            obstacle)
+        self.game.board[2][2] = self.game.board[2][6] = Pawn("color", (1, 1))
+        self.assertEqual(
+            self.game.board[4][4].movement_unpromoted(self.game.board),
+            capture)
+
     @parameterized.expand([
-        ("white", 
-        [(0, 0), (0, 8), (1, 1), (1, 7), (2, 2), (2, 6), (3, 3), (3, 4), (3, 5), (4, 3), (4, 5), (5, 3), (5, 4), (5, 5), (6, 2), (6, 6), (7, 1), (7, 7), (8, 0), (8, 8)], 
-        [(3, 3), (3, 4), (3, 5), (4, 3), (4, 5), (5, 3), (5, 4), (5, 5), (6, 2), (6, 6), (7, 1), (7, 7), (8, 0), (8, 8)],
-        [(2, 2), (2, 6), (3, 3), (3, 4), (3, 5), (4, 3), (4, 5), (5, 3), (5, 4), (5, 5), (6, 2), (6, 6), (7, 1), (7, 7), (8, 0), (8, 8)],
-        ),
-        ("black", 
-        [(0, 0), (0, 8), (1, 1), (1, 7), (2, 2), (2, 6), (3, 3), (3, 4), (3, 5), (4, 3), (4, 5), (5, 3), (5, 4), (5, 5), (6, 2), (6, 6), (7, 1), (7, 7), (8, 0), (8, 8)], 
-        [(3, 3), (3, 4), (3, 5), (4, 3), (4, 5), (5, 3), (5, 4), (5, 5), (6, 2), (6, 6), (7, 1), (7, 7), (8, 0), (8, 8)],
-        [(2, 2), (2, 6), (3, 3), (3, 4), (3, 5), (4, 3), (4, 5), (5, 3), (5, 4), (5, 5), (6, 2), (6, 6), (7, 1), (7, 7), (8, 0), (8, 8)],
-        ),
+        ("white",
+            [(0, 0), (0, 8), (1, 1), (1, 7), (2, 2), (2, 6), (3, 3), (3, 4), (3, 5), (4, 3), (4, 5), (5, 3), (5, 4), (5, 5), (6, 2), (6, 6), (7, 1), (7, 7), (8, 0), (8, 8)],
+            [(3, 3), (3, 4), (3, 5), (4, 3), (4, 5), (5, 3), (5, 4), (5, 5), (6, 2), (6, 6), (7, 1), (7, 7), (8, 0), (8, 8)],
+            [(2, 2), (2, 6), (3, 3), (3, 4), (3, 5), (4, 3), (4, 5), (5, 3), (5, 4), (5, 5), (6, 2), (6, 6), (7, 1), (7, 7), (8, 0), (8, 8)],),
+        ("black",
+            [(0, 0), (0, 8), (1, 1), (1, 7), (2, 2), (2, 6), (3, 3), (3, 4), (3, 5), (4, 3), (4, 5), (5, 3), (5, 4), (5, 5), (6, 2), (6, 6), (7, 1), (7, 7), (8, 0), (8, 8)],
+            [(3, 3), (3, 4), (3, 5), (4, 3), (4, 5), (5, 3), (5, 4), (5, 5), (6, 2), (6, 6), (7, 1), (7, 7), (8, 0), (8, 8)],
+            [(2, 2), (2, 6), (3, 3), (3, 4), (3, 5), (4, 3), (4, 5), (5, 3), (5, 4), (5, 5), (6, 2), (6, 6), (7, 1), (7, 7), (8, 0), (8, 8)],),
     ])
-    def test_bishop_moves_promoted(self, color, valid_moves, movement_hindered, move_to_capture):
+    def test_bishop_moves_promoted(self, color, valid, obstacle, capture):
         self.game.board = self.sample_board
         self.game.board[4][4] = Bishop(color, (4, 4))
         self.game.board[4][4].promote()
-        self.assertEqual(self.game.board[4][4].movement_promoted(self.game.board), valid_moves)
+        self.assertEqual(
+            self.game.board[4][4].movement_promoted(self.game.board),
+            valid)
         self.game.board[2][2] = self.game.board[2][6] = Pawn(color, (1, 1))
-        self.assertEqual(self.game.board[4][4].movement_promoted(self.game.board), movement_hindered)
-        self.game.board[2][2] = self.game.board[2][6] = Pawn("test-color", (1, 1))
-        self.assertEqual(self.game.board[4][4].movement_promoted(self.game.board), move_to_capture)
-    
-    def test_valid_moves_method(self):
-        unpromoted_valid_moves = [(3, 4)]
-        promoted_valid_moves = [(3, 3), (3, 4), (3, 5), (4, 3), (4, 5), (5, 4)]
+        self.assertEqual(
+            self.game.board[4][4].movement_promoted(self.game.board),
+            obstacle)
+        self.game.board[2][2] = self.game.board[2][6] = Pawn("color", (1, 1))
+        self.assertEqual(
+            self.game.board[4][4].movement_promoted(self.game.board),
+            capture)
+
+    def test_valid_method(self):
+        unpromoted_valid = [(3, 4)]
+        promoted_valid = [(3, 3), (3, 4), (3, 5), (4, 3), (4, 5), (5, 4)]
         self.game.board = self.sample_board
         self.game.board[4][4] = Pawn("white", (4, 4))
-        self.assertEqual(self.game.board[4][4].valid_moves(self.game.board), unpromoted_valid_moves)
+        self.assertEqual(
+            self.game.board[4][4].valid_moves(self.game.board),
+            unpromoted_valid)
         self.game.board[4][4].promote()
-        self.assertEqual(self.game.board[4][4].valid_moves(self.game.board), promoted_valid_moves)
-        
+        self.assertEqual(
+            self.game.board[4][4].valid_moves(self.game.board),
+            promoted_valid)
+
     def test_promote_method(self):
         self.game.board = self.sample_board
         self.game.board[4][4] = Pawn("white", (4, 4))
@@ -361,14 +423,14 @@ class TestShogi(unittest.TestCase):
         self.game.board[4][4].promote()
         self.assertTrue(self.game.board[4][4].promoted)
         self.assertFalse(self.game.board[4][4].set_for_promotion)
-    
+
     def test_update_position_method(self):
         self.game.board = self.sample_board
         self.game.board[4][4] = Pawn("white", (4, 4))
         self.assertEqual(self.game.board[4][4].position, (4, 4))
         self.game.board[4][4].update_position(3, 4)
         self.assertEqual(self.game.board[4][4].position, (3, 4))
-    
+
     @parameterized.expand([
         ("white", (2, 4)),
         ("black", (6, 4)),
@@ -380,12 +442,12 @@ class TestShogi(unittest.TestCase):
         self.assertFalse(self.game.board[4][4].set_for_promotion)
         self.game.board[4][4].update_position(row, col)
         self.assertTrue(self.game.board[4][4].set_for_promotion)
-    
+
     @parameterized.expand([
         ("white", (2, 4)),
         ("black", (6, 4)),
     ])
-    def test_king_goldengeneral_never_valid_for_promotion(self, color, coordinates):
+    def test_king_goldengeneral_never_set_for_promotion(self, color, coordinates):
         pieces = [King, GoldGeneral]
         row, col = coordinates
         self.game.board = self.sample_board
@@ -396,8 +458,10 @@ class TestShogi(unittest.TestCase):
             self.assertFalse(self.game.board[4][4].set_for_promotion)
 
     @parameterized.expand([
-        ("white", [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)], [(1, 0), (1, 1)]),
-        ("black", [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)], [(0, 1), (1, 1)]),
+        ("white",
+            [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)], [(1, 0), (1, 1)]),
+        ("black",
+            [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)], [(0, 1), (1, 1)]),
     ])
     def test_filter_moves_normal_method(self, color, coords, filtered_coords):
         self.game.board = self.sample_board
@@ -422,18 +486,16 @@ class TestShogi(unittest.TestCase):
         self.assertEqual(self.game.board[4][3].filter_moves(moves_2, self.game.board), filtered_2)
 
     @parameterized.expand([
-        ("white", 
-        [[(3, 4), (2, 4), (1, 4), (0, 4)], [(3, 4)]],
-        [[(4, 3), (4, 2), (4, 1), (4, 0)], [(4, 3), (4, 2)]], 
-        [[(4, 5), (4, 6), (4, 7), (4, 8)], [(4, 5)]], 
-        [[(5, 4), (6, 4), (7, 4), (8, 4)], [(5, 4), (6, 4)]],
-        ),
-        ("black", 
-        [[(3, 4), (2, 4), (1, 4), (0, 4)], [(3, 4), (2, 4)]],
-        [[(4, 3), (4, 2), (4, 1), (4, 0)], [(4, 3)]], 
-        [[(4, 5), (4, 6), (4, 7), (4, 8)], [(4, 5), (4, 6)]], 
-        [[(5, 4), (6, 4), (7, 4), (8, 4)], [(5, 4)]],  
-        ),
+        ("white",
+            [[(3, 4), (2, 4), (1, 4), (0, 4)], [(3, 4)]],
+            [[(4, 3), (4, 2), (4, 1), (4, 0)], [(4, 3), (4, 2)]],
+            [[(4, 5), (4, 6), (4, 7), (4, 8)], [(4, 5)]],
+            [[(5, 4), (6, 4), (7, 4), (8, 4)], [(5, 4), (6, 4)]],),
+        ("black",
+            [[(3, 4), (2, 4), (1, 4), (0, 4)], [(3, 4), (2, 4)]],
+            [[(4, 3), (4, 2), (4, 1), (4, 0)], [(4, 3)]],
+            [[(4, 5), (4, 6), (4, 7), (4, 8)], [(4, 5), (4, 6)]],
+            [[(5, 4), (6, 4), (7, 4), (8, 4)], [(5, 4)]]),
     ])
     def test_filter_moves_rook_method(self, color, coords_n, coords_w, coords_e, coords_s):
         moves_n, filtered_moves_n = coords_n
@@ -450,20 +512,18 @@ class TestShogi(unittest.TestCase):
         self.assertEqual(self.game.board[4][4].filter_moves(moves_w, self.game.board), filtered_moves_w)
         self.assertEqual(self.game.board[4][4].filter_moves(moves_e, self.game.board), filtered_moves_e)
         self.assertEqual(self.game.board[4][4].filter_moves(moves_s, self.game.board), filtered_moves_s)
-    
+
     @parameterized.expand([
-        ("white", 
-        [[(3, 3), (2, 2), (1, 1), (0, 0)], [(3, 3)]],
-        [[(3, 5), (2, 6), (1, 7), (0, 8)], [(3, 5), (2, 6)]], 
-        [[(5, 3), (6, 2), (7, 1), (8, 0)], [(5, 3)]], 
-        [[(5, 5), (6, 6), (7, 7), (8, 8)], [(5, 5), (6, 6)]],
-        ),
-        ("black", 
-        [[(3, 3), (2, 2), (1, 1), (0, 0)], [(3, 3), (2, 2)]],
-        [[(3, 5), (2, 6), (1, 7), (0, 8)], [(3, 5)]], 
-        [[(5, 3), (6, 2), (7, 1), (8, 0)], [(5, 3), (6, 2)]], 
-        [[(5, 5), (6, 6), (7, 7), (8, 8)], [(5, 5)]],
-        ),
+        ("white",
+            [[(3, 3), (2, 2), (1, 1), (0, 0)], [(3, 3)]],
+            [[(3, 5), (2, 6), (1, 7), (0, 8)], [(3, 5), (2, 6)]],
+            [[(5, 3), (6, 2), (7, 1), (8, 0)], [(5, 3)]],
+            [[(5, 5), (6, 6), (7, 7), (8, 8)], [(5, 5), (6, 6)]]),
+        ("black",
+            [[(3, 3), (2, 2), (1, 1), (0, 0)], [(3, 3), (2, 2)]],
+            [[(3, 5), (2, 6), (1, 7), (0, 8)], [(3, 5)]],
+            [[(5, 3), (6, 2), (7, 1), (8, 0)], [(5, 3), (6, 2)]],
+            [[(5, 5), (6, 6), (7, 7), (8, 8)], [(5, 5)]]),
     ])
     def test_filter_moves_bishop_method(self, color, coords_nw, coords_ne, coords_sw, coords_se):
         moves_nw, filtered_moves_nw = coords_nw
@@ -480,7 +540,7 @@ class TestShogi(unittest.TestCase):
         self.assertEqual(self.game.board[4][4].filter_moves(moves_ne, self.game.board), filtered_moves_ne)
         self.assertEqual(self.game.board[4][4].filter_moves(moves_sw, self.game.board), filtered_moves_sw)
         self.assertEqual(self.game.board[4][4].filter_moves(moves_se, self.game.board), filtered_moves_se)
-    
+
     @parameterized.expand([
         ("white", [(7, 0), (7, 8)]),
         ("black", [(1, 0), (1, 8)]),
@@ -498,7 +558,7 @@ class TestShogi(unittest.TestCase):
         for piece in pieces:
             current_piece = piece(color, (4, 4))
             self.assertEqual(current_piece.valid_drops(self.game.board), empty_spaces)
-    
+
     @parameterized.expand([
         ("white", [(7, 0), (7, 2), (7, 3), (7, 4), (7, 5), (7, 6), (7, 8)]),
         ("black", [(1, 0), (1, 2), (1, 3), (1, 4), (1, 5), (1, 6), (1, 8)]),
@@ -551,7 +611,7 @@ class TestShogi(unittest.TestCase):
                     (7, 3), (7, 4)]
         valid_spaces.remove(front_of_king)
         self.assertEqual(piece.valid_drops(self.game.board), valid_spaces)
-    
+
     @parameterized.expand([
         ("white", "black", (5 ,4)),
         ("black", "white", (3, 4)),
@@ -573,10 +633,6 @@ class TestShogi(unittest.TestCase):
         for space in invalid_spaces:
             self.assertFalse(space in pawn.pawn_drop_rules(self.game.board, empty_spaces))
 
-#######################################################################################################
-####################################### Pieces Tests /end #############################################
-#######################################################################################################
-
     def test_board_print_method(self):
         expected_screen = "\nCaptures-Black:\n \n9:\n\n   0   1   2   3   4   5   6   7   8  \n +-----------------------------------+\n"
         for i in range(9):
@@ -586,7 +642,7 @@ class TestShogi(unittest.TestCase):
             expected_screen += "|\n +---+---+---+---+---+---+---+---+---+\n"
         expected_screen += "\nCaptures-White:\n \n9:"
         self.assertEqual(self.game.board_print(), expected_screen)
-    
+
     @parameterized.expand([
         ("white", [("6", "0"), (6, 0), (6, 1), (6, 2), (6, 3), (6, 4), (6, 5), (6, 7), (6, 8), (7, 7), (8, 0), (8, 2), (8, 3), (8, 4), (8, 5), (8, 6), (8, 8)]),
         ("black", [("2", "0"), (2, 0), (2, 1), (2, 2), (2, 3), (2, 4), (2, 5), (2, 7), (2, 8), (1, 1), (0, 0), (0, 2), (0, 3), (0, 4), (0, 5), (0, 6), (0, 8)]),
