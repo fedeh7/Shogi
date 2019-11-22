@@ -11,7 +11,7 @@ class TestInterface(unittest.TestCase):
         self.play = Interface()
 
     def test_set_interface(self):
-        self.assertEqual(self.play.game.__class__.__name__, "Shogi")
+        self.assertTrue(isinstance(self.play.game, Shogi))
         self.assertEqual(self.play.turn_count, 0)
 
     def test_print_board(self):
@@ -89,7 +89,22 @@ class TestInterface(unittest.TestCase):
     def test_start_playing_white_wins(self, mock):
         self.play.start_playing()
         self.assertEqual(self.play.turn_count, 5)
+        self.assertFalse(self.play.game.is_playing)
 
+    @unittest.mock.patch(
+        "builtins.input",
+        side_effect=[
+            "6", "0", "5", "0",
+            "2", "6", "3", "6",
+            "5", "0", "4", "0",
+            "1", "7", "6", "2", "y",
+            "4", "0", "3", "0",
+            "6", "2", "8", "4",
+            ])
+    def test_start_playing_black_wins(self, mock):
+        self.play.start_playing()
+        self.assertEqual(self.play.turn_count, 6)
+        self.assertFalse(self.play.game.is_playing)
 
 if __name__ == "__main__":
     unittest.main()

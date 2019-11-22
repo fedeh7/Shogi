@@ -44,26 +44,26 @@ class TestShogi(unittest.TestCase):
     def test_board_valid(self, color, rows):
         row_1, row_2, row_3 = rows
         pieces = [
-            "Lance", "Knight", "SilverGeneral",
-            "GoldGeneral", "King", "GoldGeneral",
-            "SilverGeneral", "Knight", "Lance"]
+            Lance, Knight, SilverGeneral,
+            GoldGeneral, King, GoldGeneral,
+            SilverGeneral, Knight, Lance]
         reversed_row = [
-            "   ", "Bishop", "   ",
+            "   ", Bishop, "   ",
             "   ", "   ", "   ",
-            "   ", "Rook", "   "]
+            "   ", Rook, "   "]
         if color == "black":
             reversed_row.reverse()
         for col in range(9):
-            self.assertTrue(self.game.board[row_3][col].__class__.__name__ == "Pawn")
+            self.assertTrue(isinstance(self.game.board[row_3][col], Pawn))
             self.assertEqual(self.game.board[row_3][col].color, color)
-            self.assertTrue(self.game.board[row_1][col].__class__.__name__ == pieces[col])
+            self.assertTrue(isinstance(self.game.board[row_1][col], pieces[col]))
             self.assertEqual(self.game.board[row_1][col].color, color)
             if self.game.board[row_2][col] != "   ":
                 if color == "white":
-                    self.assertTrue(self.game.board[row_2][col].__class__.__name__ == reversed_row[col])
+                    self.assertTrue(isinstance(self.game.board[row_2][col], reversed_row[col]))
                     self.assertEqual(self.game.board[row_1][col].color, color)
                 elif color == "black":
-                    self.assertTrue(self.game.board[row_2][col].__class__.__name__ == reversed_row[col])
+                    self.assertTrue(isinstance(self.game.board[row_2][col], reversed_row[col]))
                     self.assertEqual(self.game.board[row_1][col].color, color)
 
     @parameterized.expand([
